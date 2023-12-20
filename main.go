@@ -47,6 +47,12 @@ func whipHandler(res http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	streamKey, err := webrtc.DecodeWhipStreamKey(streamKey)
+	if err != nil {
+		logHTTPError(res, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	offer, err := io.ReadAll(r.Body)
 	if err != nil {
 		logHTTPError(res, err.Error(), http.StatusBadRequest)
@@ -69,6 +75,12 @@ func whepHandler(res http.ResponseWriter, req *http.Request) {
 	streamKey := req.Header.Get("Authorization")
 	if streamKey == "" {
 		logHTTPError(res, "Authorization was not set", http.StatusBadRequest)
+		return
+	}
+
+	streamKey, err := webrtc.DecodeWhepStreamKey(streamKey)
+	if err != nil {
+		logHTTPError(res, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
