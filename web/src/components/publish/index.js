@@ -1,9 +1,74 @@
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 
+function parseBool(x) {
+  return x === '1' || x === 'true';
+}
+
 let mediaOptions = {
-  audio: true,
-  video: true
+  audio: { },
+  video: { facingMode: 'environment' },
+}
+let kbps = 3500;
+let initialGdm = false;
+
+const query = new URLSearchParams(location.search);
+if (query.has('fm')) {
+  mediaOptions.video.facingMode = query.get('fm');
+}
+if (query.has('a')) {
+  let ar = query.get('a');
+  if (ar.includes('_')) {
+    let [numerator, denominator] = ar.split('_');
+    mediaOptions.video.aspectRatio = parseFloat(numerator)/parseFloat(denominator);
+  } else {
+    mediaOptions.video.aspectRatio = parseFloat(ar);
+  }
+}
+if (query.has('r')) {
+  mediaOptions.video.frameRate = parseFloat(query.get('r'));
+}
+if (query.has('h')) {
+  mediaOptions.video.height = parseFloat(query.get('h'));
+}
+if (query.has('w')) {
+  mediaOptions.video.width = parseFloat(query.get('w'));
+}
+for (const [k, v] of query) {
+  if (k.startsWith('vs.')) {
+    mediaOptions.video[k.substring(3)] = v;
+  }
+  if (k.startsWith('vf.')) {
+    mediaOptions.video[k.substring(3)] = parseFloat(v);
+  }
+  if (k.startsWith('vb.')) {
+    mediaOptions.video[k.substring(3)] = parseBool(v);
+  }
+  if (k.startsWith('as.')) {
+    mediaOptions.audio[k.substring(3)] = v;
+  }
+  if (k.startsWith('af.')) {
+    mediaOptions.audio[k.substring(3)] = parseFloat(v);
+  }
+  if (k.startsWith('ab.')) {
+    mediaOptions.audio[k.substring(3)] = parseBool(v);
+  }
+}
+if (query.has('ve')) {
+  if (!parseBool(query.get('ve'))) {
+    mediaOptions.video = false;
+  }
+}
+if (query.has('ae')) {
+  if (!parseBool(query.get('ae'))) {
+    mediaOptions.audio = false;
+  }
+}
+if (query.has('br')) {
+  kbps = parseFloat(query.get('br'));
+}
+if (query.has('gdm')) {
+  initialGdm = parseBool(query.get('gdm'));
 }
 
 function Player(props) {
@@ -11,7 +76,7 @@ function Player(props) {
   const location = useLocation()
   const [mediaAccessError, setMediaAccessError] = React.useState(null);
   const [publishSuccess, setPublishSuccess] = React.useState(false);
-  const [useDisplayMedia, setUseDisplayMedia] = React.useState(false);
+  const [useDisplayMedia, setUseDisplayMedia] = React.useState(initialGdm);
 
   React.useEffect(() => {
     const peerConnection = new RTCPeerConnection() // eslint-disable-line
@@ -38,15 +103,8 @@ function Player(props) {
             direction: 'sendonly',
             sendEncodings: [
               {
-                rid: 'high'
-              },
-              {
-                rid: 'med',
-                scaleResolutionDownBy: 2.0
-              },
-              {
-                rid: 'low',
-                scaleResolutionDownBy: 4.0
+                rid: 'high',
+                maxBitrate: kbps*1024
               }
             ]
           })
