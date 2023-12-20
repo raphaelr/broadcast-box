@@ -96,7 +96,10 @@ func whepHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	apiPath := req.Host + strings.TrimSuffix(req.URL.RequestURI(), "whep")
+	apiPath := os.Getenv("PUBLIC_API_URL")
+	if apiPath == "" {
+		apiPath = req.Host + strings.TrimSuffix(req.URL.RequestURI(), "whep")
+	}
 	res.Header().Add("Link", `<`+apiPath+"sse/"+whepSessionId+`>; rel="urn:ietf:params:whep:ext:core:server-sent-events"; events="layers"`)
 	res.Header().Add("Link", `<`+apiPath+"layer/"+whepSessionId+`>; rel="urn:ietf:params:whep:ext:core:layer"`)
 	res.Header().Add("Location", "/api/whep")
