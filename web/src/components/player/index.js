@@ -4,8 +4,16 @@ import { useLocation } from 'react-router-dom'
 
 export const CinemaModeContext = React.createContext(null);
 
+let initialCinemaMode = null;
+
+const query = new URLSearchParams(location.search);
+if (query.has('cm')) {
+	const cm = query.get('cm');
+	initialCinemaMode = cm === '1' || cm === 'true';
+}
+
 export function CinemaModeProvider({ children }) {
-  const [cinemaMode, setCinemaMode] = useState(() => localStorage.getItem("cinema-mode") === "true");
+  const [cinemaMode, setCinemaMode] = useState(() => initialCinemaMode != null ? initialCinemaMode : localStorage.getItem("cinema-mode"));
   const state = useMemo(() => ({
     cinemaMode,
     setCinemaMode,
